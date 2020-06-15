@@ -12,17 +12,22 @@ pub fn add_all(paths: &Vec<&str>) -> Result<(), Error> {
         if full_path.is_file() {
             let blob = Blob::from_path(&full_path)?;
             file_service.write_object(&blob.hash, &blob.data)?;
-            index.update(&full_path.to_str().unwrap(), &blob.hash);
+            let relative_path = full_path.strip_prefix(&file_service.root_dir).unwrap();
+            index.update(&relative_path.to_str().unwrap(), &blob.hash);
+            
         }
         else {
             let nested_files = file_service.get_all_files_in_dir(&full_path)?;
             for file_path in nested_files {
                 let blob = Blob::from_path(&file_path)?;
                 file_service.write_object(&blob.hash, &blob.data)?;
-                index.update(&full_path.to_str().unwrap(), &blob.hash);
+                let relative_path = file_path.strip_prefix(&file_service.root_dir).unwrap();
+                index.update(&relative_path.to_str().unwrap(), &blob.hash);
             }
         }
     }
+
+    index.write()?;
 
     Ok(())
 }
