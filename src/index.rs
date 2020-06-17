@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use super::error::Error;
 
 /// Index includes all files that have been added. i.e. What we are tracking
-
 pub struct Index {
     pub path: PathBuf,
     pub hashtree: BTreeMap<String, String>,
@@ -43,7 +42,7 @@ impl Index {
     pub fn write(&self) -> io::Result<()> {
         let mut index = File::create(&self.path)?;
         for (ref path, ref hash) in self.hashtree.iter() {
-            writeln!(&mut index, "{} {}", path, hash)?;
+            writeln!(&mut index, "{} {}", hash, path)?;
         }
         Ok(())
     }
