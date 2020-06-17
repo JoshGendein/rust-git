@@ -14,6 +14,6 @@ pub fn init() -> Result<(), Error> {
     fs::create_dir(dir.join("refs").join("heads"))?;
 
     let mut head = File::create(dir.join("HEAD"))?;
-    head.write_all("refs: refs/heads/master".as_bytes())?;
+    head.write_all("refs: refs/heads/main".as_bytes())?;
     Ok(())
 }
