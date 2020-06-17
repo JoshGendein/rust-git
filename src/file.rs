@@ -1,6 +1,6 @@
 use std::env;
 use std::fs;
-use std::fs::File;
+use std::fs::{ File, OpenOptions };
 
 use std::io;
 use std::io::{Read, Write};
@@ -50,7 +50,9 @@ impl FileService {
         path.as_ref().join(".gitr").exists()
     }
 
-    pub fn get_head_ref(&self) -> io::Result<PathBuf> {
+    // Gets the path to to file HEAD is pointing to
+    // (e.g. this returns "refs/heads/main")
+    pub fn get_head_path(&self) -> Result<PathBuf, Error> {
         let mut head_file = File::open(self.root_dir.join(".gitr/HEAD"))?;
         let mut ref_path = String::new();
         head_file.read_to_string(&mut ref_path)?;
@@ -58,6 +60,34 @@ impl FileService {
         // Split off the first part "refs: "
         let ref_path = ref_path.split_off(6);
         Ok(self.gitr_dir.join(ref_path))
+    }
+
+    // Gets the reference that HEAD is pointing to
+    // (e.g. this returns "$hash_to_latest_commit")
+    pub fn get_head_ref(&self) -> Option<String> {
+        
+        if let Ok(ref_path) = self.get_head_path() {
+            if let Ok(mut head_ref_file) = File::open(self.gitr_dir.join(ref_path)) {
+                let mut head_ref = String::new();
+                head_ref_file.read_to_string(&mut head_ref).unwrap();
+                return Some(head_ref);
+            }
+        }
+        return None;
+    }
+
+    pub fn write_head_ref(&self, head_ref: &str) -> Result<(), Error> {
+
+        let ref_path = self.get_head_path()?;
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(ref_path)?;
+
+        file.write_all(head_ref.as_bytes())?;
+
+        return Ok(())
     }
 
     pub fn write_object(&self, hash: &str, data: &Vec<u8>) -> Result<(), Error> {
@@ -69,7 +99,7 @@ impl FileService {
         // Write data to file with name last 38 characters of hash.
         let filename = dir.join(&hash[2..]);
         let mut object_file = File::create(&filename)?;
-        object_file.write_all(&data)?;
+        object_file.write_all(data)?;
         Ok(())
     }
 
