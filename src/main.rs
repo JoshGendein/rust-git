@@ -4,6 +4,7 @@ mod index;
 mod types;
 mod file;
 mod add;
+mod commit;
 
 use clap::{App, Arg, SubCommand};
 
@@ -18,8 +19,10 @@ fn main() {
                     .index(1)
                     .multiple(true)
                     .required(true),
-                ),
-    ).get_matches();
+                ))
+        .subcommand(SubCommand::with_name("commit"))
+        .about("Commit staged files")
+    .get_matches();
 
     match m.subcommand() {
         ("init", Some(..)) =>
@@ -33,6 +36,11 @@ fn main() {
                 Err(e) => println!("Error: {}", e),
             }
         }
+        ("commit", Some(..)) =>
+            match commit::commit() {
+                Ok(()) => println!("Commited"),
+                Err(e) => println!("Error: {}", e),
+            }
         _ => println!("Command not recognized.")
     }
 }
